@@ -1,0 +1,11 @@
+[Unit]
+Description=waste proxy
+After=whisper.service
+Requires=whisper.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat TCP-LISTEN:${PROXY_BIND_ENDPOINT},reuseaddr,fork UNIX-CONNECT:${WASTE_SOCKET}
+
+[Install]
+WantedBy=default.target

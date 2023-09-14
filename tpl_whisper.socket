@@ -1,0 +1,9 @@
+[Unit]
+Description=Whisper Socket
+PartOf=whisper.service
+
+[Socket]
+ListenStream=${WASTE_SOCKET}
+
+[Install]
+WantedBy=sockets.target

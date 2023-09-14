@@ -1,0 +1,12 @@
+[Unit]
+Description=Whisper Transcription Service
+After=whisper.socket
+Requires=whisper.socket
+
+[Service]
+Type=simple
+ExecStart=${BIN_PYTHON} ${WASTE_SERVE_PY} -m medium ${WASTE_SOCKET}
+TimeoutStopSec=5
+
+[Install]
+WantedBy=default.target
