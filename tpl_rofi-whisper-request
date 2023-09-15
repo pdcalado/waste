@@ -13,7 +13,7 @@ IS_REMOTE=$([[ -n "$$PROXY_REMOTE_ENDPOINT" ]] && echo true || echo false)
 
 SOCKET=$$WASTE_SOCKET
 
-# check if service is running for local or remote setup
+# check if service is running (local or remote setup)
 service_is_running() {
     # if not remote, use systemd
     if [ "$IS_REMOTE" = "false" ]; then
@@ -25,7 +25,7 @@ service_is_running() {
         "$$PROXY_REMOTE_ENDPOINT/" && return 0 || return 1
 }
 
-# request to service for local or remote setup
+# request transcription (local or remote setup)
 service_request() {
     # if not use socket endpoint
     if [ "$IS_REMOTE" = "false" ]; then
@@ -48,13 +48,8 @@ service_request() {
 
 logger -s "Invoking whisper"
 
-PID_FILE="/tmp/rofi-whisper-request.pid"
-
 # Set the audio source
 audio_source=$$AUDIO_DEVICE
-
-# Set language options
-language_options=$(echo "$$LANGS" | tr ',' '\n')
 
 # check if audio source is muted
 is_muted=$(pacmd list-sources | grep -A 11 "$audio_source" | awk '/muted/ {print $2; exit}')
@@ -90,10 +85,16 @@ device_string=$(pacmd list-sources | grep -A60 "$audio_source" | grep "device.st
 # Find the number of channels
 device_channels=$(pacmd list-sources | grep -A20 "$audio_source" | grep "channel map:" | cut -d':' -f2- | tr ',' '\n' | wc -l)
 
+PID_FILE="/tmp/rofi-whisper-request.pid"
+
 # Record audio from the microphone and save it to the temporary file
 arecord --device="$device_string" -f S16_LE -c "$device_channels" -r 16000 --process-id-file "$PID_FILE" "$temp_file16khz" &
 
-lang=$( (echo -e "$language_options";)  | rofi -dmenu -p "Speak" || true)
+# Set language options
+language_options=$(echo "$$LANGS" | tr ',' '\n')
+
+# Select language using rofi
+lang=$( (echo -e "$language_options";)  | rofi -dmenu -p "Speak now" || true)
 
 logger -s "Selected language: \"$lang\""
 
@@ -106,9 +107,7 @@ if [ -z "$lang" ]; then
     exit 0
 fi
 
-raw_output=$(service_request "$lang" "$temp_file16khz")
-
-output=$(echo "$raw_output" | jq '.text' -r | sed "s/^\ //g")
+output=$(service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -f "$$PATTERNS_FILE")
 
 logger -s "$output"
 
