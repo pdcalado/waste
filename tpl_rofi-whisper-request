@@ -22,7 +22,7 @@ service_is_running() {
 
     # else, curl health endpoint
     curl --silent --fail --show-error \
-        "$$PROXY_REMOTE_ENDPOINT/" && return 0 || return 1
+        "http://$$PROXY_REMOTE_ENDPOINT/" && return 0 || return 1
 }
 
 # request transcription (local or remote setup)
@@ -71,8 +71,13 @@ fi
 
 # if not active print error and exit
 if ! service_is_running; then
-    systemctl --user start whisper.service
-    rofi_error "Whisper was not running, starting..."
+    # if not remote, start service using systemd
+    if [ "$IS_REMOTE" = "false" ]; then
+        rofi_error "Whisper was not running, starting service using systemctl"
+        exit 1
+    fi
+
+    rofi_error "Whisper is not running, check remote service"
     exit 1
 fi
 
@@ -80,7 +85,7 @@ fi
 temp_file16khz=$(mktemp -t "stt-XXXXXXXXXX.wav")
 
 # Find the right microphone
-device_string=$(pacmd list-sources | grep -A60 "$audio_source" | grep "device.string = \"hw:" | head -n1 | cut -d'"' -f2)
+device_string=$(pacmd list-sources | grep -A60 "$audio_source" | grep "device.string = \"" | head -n1 | cut -d'"' -f2)
 
 # Find the number of channels
 device_channels=$(pacmd list-sources | grep -A20 "$audio_source" | grep "channel map:" | cut -d':' -f2- | tr ',' '\n' | wc -l)
