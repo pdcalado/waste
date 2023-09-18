@@ -20,14 +20,14 @@ There are 3 main components:
 
 The setup relies on:
 
-* systemd (to run server and proxy as services)
-* pacmd (to list audio sources)
-* arecord (to record audio)
-* socat (to expose server)
-* whisper (to transcribe audio files)
-* rofi (for user interaction, I use it on i3 wm)
-* dunstify (to send notification once transcription is ready)
-* xclip (to copy text to clipboard)
+* [systemd](https://systemd.io) (to run server and proxy as services)
+* [pacmd](https://linux.die.net/man/1/pacmd) (to list audio sources)
+* [arecord](https://linux.die.net/man/1/arecord) (to record audio)
+* [socat](https://linux.die.net/man/1/socat) (to expose server)
+* [whisper](https://github.com/openai/whisper) (to transcribe audio files)
+* [rofi](https://github.com/davatorium/rofi) (for user interaction, I use it on i3 wm)
+* [dunstify](https://linuxcommandlibrary.com/man/dunstify) (to send notification once transcription is ready)
+* [xclip](https://linux.die.net/man/1/xclip) (to copy text to clipboard)
 
 ## Setup
 
@@ -48,7 +48,7 @@ flowchart LR
     C[Client]
  end
 
- C --> S
+ C -->|unix socket| S
 ```
 
 Copy the file `.example-single-host-env` to `.env` and edit it to your needs:
@@ -66,7 +66,7 @@ PATTERNS_FILE="/home/user/.waste-patterns.sed" # path to sed patterns file
 Now you can bind the client script to a key in your window manager, for example in i3:
 
 ```sh
-bindsym $mod+Shift+space exec $HOME/.local/bin/rofi-whisper-request
+bindsym $mod+n exec $HOME/.local/bin/rofi-whisper-request
 ```
 
 ### Setup Remote
@@ -75,16 +75,16 @@ bindsym $mod+Shift+space exec $HOME/.local/bin/rofi-whisper-request
 flowchart LR
 
  subgraph "Remote Host"
-    S[Server]
-    P[Proxy]
+    S["Server (whisper)"]
+    P["Proxy (socat)"]
  end
 
  subgraph "Local (Client)"
     C[Client]
  end
 
- P --> S
- C --> P
+ P -->|unix socket| S
+ C -->|"POST /transcribe"| P
 ```
 
 **NOTE ON SECURITY**: This is not meant to be used in a public network, as it does not use any encryption or auth of any kind. Do not expose the server to the internet. It is meant to be used in a private network, where you trust all the hosts.
@@ -112,3 +112,9 @@ PROXY_REMOTE_ENDPOINT="192.168.1.10:29999" # remote host IP and port where proxy
 ```
 
 * Run `make install-client` (generates and installs client script)
+
+Now you can bind the client script to a key in your window manager, for example in i3:
+
+```sh
+bindsym $mod+n exec $HOME/.local/bin/rofi-whisper-request
+```
