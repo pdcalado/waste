@@ -10,6 +10,8 @@ The main goal is to get speech to text anywhere:
 * notification pops when transcription is ready
 * whisper's output text becomes available in the clipboard
 
+![](/recording.gif)
+
 ## How?
 
 There are 3 main components:
