@@ -13,9 +13,9 @@ IS_REMOTE=$([[ -n "$$PROXY_REMOTE_ENDPOINT" ]] && echo true || echo false)
 
 SOCKET=$$WASTE_SOCKET
 
-# check if service is running (local or remote setup)
+# Check if service is running (local or remote setup)
 service_is_running() {
-    # if not remote, use systemd
+    # If not remote, use systemd
     if [ "$IS_REMOTE" = "false" ]; then
         systemctl --user is-active whisper.service && return 0 || return 1
     fi
@@ -25,9 +25,9 @@ service_is_running() {
         "http://$$PROXY_REMOTE_ENDPOINT/" && return 0 || return 1
 }
 
-# request transcription (local or remote setup)
+# Request transcription (local or remote setup)
 service_request() {
-    # if not use socket endpoint
+    # If not remote, use socket endpoint
     if [ "$IS_REMOTE" = "false" ]; then
         curl --silent --fail --show-error \
             --unix-socket "$SOCKET" \
@@ -51,29 +51,30 @@ logger -s "Invoking whisper"
 # Set the audio source
 audio_source=$$AUDIO_DEVICE
 
-# check if audio source is muted
+# Check if audio source is muted
 is_muted=$(pacmd list-sources | grep -A 11 "$audio_source" | awk '/muted/ {print $2; exit}')
 
-# if muted print error and exit
+# If muted print error and exit
 if [ "$is_muted" = "yes" ]; then
     rofi_error "Audio source is muted, unmute before speaking"
     exit 1
 fi
 
-# check if audio source is busy
+# Check if audio source is busy
 is_busy=$(pacmd list-sources | grep -A 6 "$audio_source" | awk '/state/ {print $2; exit}')
 
-# if running or idle, print error and exit
+# If running or idle, print error and exit
 if [ "$is_busy" = "RUNNING" ] || [ "$is_busy" = "IDLE" ]; then
     rofi_error "Audio source is busy ($is_busy), free it and try again"
     exit 1
 fi
 
-# if not active print error and exit
+# Print error and exit if not active
 if ! service_is_running; then
-    # if not remote, start service using systemd
+
     if [ "$IS_REMOTE" = "false" ]; then
         rofi_error "Whisper was not running, starting service using systemctl"
+        systemctl --user start whisper.service
         exit 1
     fi
 
@@ -106,7 +107,7 @@ logger -s "Selected language: \"$lang\""
 # Stop the recording process
 kill "$(cat $PID_FILE)"
 
-# if language is empty exit
+# If language is empty exit
 if [ -z "$lang" ]; then
     logger -s "No language selected"
     exit 0
