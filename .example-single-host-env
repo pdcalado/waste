@@ -1,5 +1,4 @@
 AUDIO_DEVICE=alsa_input.pci-0000_03_00.6.analog-stereo
 LANGS="en,es"
 BIN_PATH="/home/user/.local/bin"
-PROXY_REMOTE_ENDPOINT="192.168.1.10:29999"
 PATTERNS_FILE="/home/user/.waste-patterns.sed"
