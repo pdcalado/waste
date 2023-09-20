@@ -12,7 +12,7 @@ export BIN_PYTHON
 export WASTE_SERVE_PY
 export WASTE_SOCKET
 
-envsubst < tpl_whisper.service > ./output/whisper.service
-envsubst < tpl_whisper.socket > ./output/whisper.socket
-envsubst < tpl_whisper-proxy.service > ./output/whisper-proxy.service
+envsubst < tpl_waste.service > ./output/waste.service
+envsubst < tpl_waste.socket > ./output/waste.socket
+envsubst < tpl_waste-proxy.service > ./output/waste-proxy.service
 

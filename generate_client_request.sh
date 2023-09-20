@@ -13,4 +13,6 @@ sed -e "s/\$\$AUDIO_DEVICE/$AUDIO_DEVICE/" \
     -e "s/\$\$PROXY_REMOTE_ENDPOINT/${PROXY_REMOTE_ENDPOINT:-}/" \
     -e "s|\$\$WASTE_SOCKET|${WASTE_SOCKET}|" \
     -e "s|\$\$PATTERNS_FILE|${PATTERNS_FILE:-/dev/null}|" \
-    < tpl_rofi-whisper-request > ./output/rofi-whisper-request
+    < tpl_rofi-waste-request > ./output/rofi-waste-request
+
+chmod +x ./output/rofi-waste-request

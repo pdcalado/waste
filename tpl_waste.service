@@ -1,0 +1,12 @@
+[Unit]
+Description=WASTE Service
+After=waste.socket
+Requires=waste.socket
+
+[Service]
+Type=simple
+ExecStart=${BIN_PYTHON} ${WASTE_SERVE_PY} -m ${WHISPER_MODEL} ${WASTE_SOCKET}
+TimeoutStopSec=5
+
+[Install]
+WantedBy=default.target

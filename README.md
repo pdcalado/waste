@@ -35,8 +35,8 @@ The setup relies on:
 
 The two possible setups are:
 
-* **Single Host**: one host running the **server** and the **client** (no **proxy** required). In other words, you run Whisper in the same machine where you need a transcription.
-* **Remote**: one host running the **server** and the **proxy**, and another host running the **client**. In other words, you run Whisper in a remote machine, and you access it from your local machine whenever you need a transcription.
+* **Single Host**: one host running the **server** and the **client** (no **proxy** required). In other words, you run whisper in the same machine where you need a transcription.
+* **Remote**: one host running the **server** and the **proxy**, and another host running the **client**. In other words, you run whisper in a remote machine, and you access it from your local machine whenever you need a transcription.
 
 **Note**: The server [serve.py](/serve.py) imports `whisper`, if you're using a virtualenv, be sure to activate it before running the commands mentioned in the sections below.
 
@@ -68,7 +68,7 @@ PATTERNS_FILE="/home/user/.waste-patterns.sed" # path to sed patterns file
 Now you can bind the client script to a key in your window manager, for example in i3:
 
 ```sh
-bindsym $mod+n exec $HOME/.local/bin/rofi-whisper-request
+bindsym $mod+n exec $HOME/.local/bin/rofi-waste-request
 ```
 
 ### Setup Remote
@@ -97,6 +97,7 @@ Copy the file `.example-server-env` to `.env` and edit it to your needs:
 
 ```sh
 PROXY_BIND_ENDPOINT=29999 # port where proxy will listen (socat binds all interfaces by default)
+WHISPER_MODEL=medium # whisper model to use
 ```
 
 * Run `make install-server` (generates and installs systemd units, including proxy)
@@ -120,3 +121,7 @@ Now you can bind the client script to a key in your window manager, for example 
 ```sh
 bindsym $mod+n exec $HOME/.local/bin/rofi-whisper-request
 ```
+
+## Uninstall
+
+Run `make uninstall`.

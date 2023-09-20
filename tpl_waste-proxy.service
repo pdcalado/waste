@@ -1,7 +1,7 @@
 [Unit]
-Description=waste proxy
-After=whisper.service
-Requires=whisper.service
+Description=WASTE proxy
+After=waste.service
+Requires=waste.service
 
 [Service]
 Type=simple

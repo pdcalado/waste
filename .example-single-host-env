@@ -2,3 +2,4 @@ AUDIO_DEVICE=alsa_input.pci-0000_03_00.6.analog-stereo
 LANGS="en,es"
 BIN_PATH="/home/user/.local/bin"
 PATTERNS_FILE="/home/user/.waste-patterns.sed"
+WHISPER_MODEL=medium

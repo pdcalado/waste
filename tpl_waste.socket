@@ -1,6 +1,6 @@
 [Unit]
-Description=Whisper Socket
-PartOf=whisper.service
+Description=Waste Socket
+PartOf=waste.service
 
 [Socket]
 ListenStream=${WASTE_SOCKET}
