@@ -10,7 +10,7 @@ The main goal is to get speech to text anywhere:
 * notification pops when transcription is ready
 * whisper's output text becomes available in the clipboard
 
-![](/recording.gif)
+![recording](/recording.gif)
 
 ## How?
 
@@ -38,7 +38,7 @@ The two possible setups are:
 * **Single Host**: one host running the **server** and the **client** (no **proxy** required). In other words, you run whisper in the same machine where you need a transcription.
 * **Remote**: one host running the **server** and the **proxy**, and another host running the **client**. In other words, you run whisper in a remote machine, and you access it from your local machine whenever you need a transcription.
 
-**Note**: The server [serve.py](/serve.py) imports `whisper`, if you're using a virtualenv, be sure to activate it before running the commands mentioned in the sections below.
+**Note**: The server [serve.py](/serve.py) imports `whisper`, if you're using a virtualenv, be sure to activate it before running the commands mentioned in the sections below. Please follow the instructions to setup whisper [here](https://github.com/openai/whisper#setup).
 
 ### Setup Single Host
 
@@ -60,6 +60,7 @@ AUDIO_DEVICE=alsa_input.pci-0000_03_00.6.analog-stereo # find your mic with 'pac
 LANGS="en,es" # comma separated list of languages to transcribe
 BIN_PATH="/home/user/.local/bin" # path where the client script will be installed
 PATTERNS_FILE="/home/user/.waste-patterns.sed" # path to sed patterns file
+WHISPER_MODEL=medium # whisper model to use
 ```
 
 * Run `make install-server` (generates and installs systemd units)
