@@ -113,7 +113,7 @@ if [ -z "$lang" ]; then
     exit 0
 fi
 
-output=$(service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -f "$$PATTERNS_FILE")
+output=$(service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")
 
 logger -s "$output"
 
