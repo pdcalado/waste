@@ -113,6 +113,9 @@ if [ -z "$lang" ]; then
     exit 0
 fi
 
+# untrap after killing the recording process
+trap - SIGINT SIGTERM EXIT
+
 output=$(service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")
 
 logger -s "$output"
