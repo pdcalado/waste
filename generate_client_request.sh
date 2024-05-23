@@ -5,13 +5,11 @@ set -xeuf -o pipefail
 # these are exported within this script
 export $(xargs < .env)
 
-WASTE_SOCKET="$(pwd)/sock"
-export WASTE_SOCKET
+export WASTE_ENDPOINT
 
 sed -e "s/\$\$AUDIO_DEVICE/$AUDIO_DEVICE/" \
     -e "s/\$\$LANGS/$LANGS/" \
-    -e "s/\$\$PROXY_REMOTE_ENDPOINT/${PROXY_REMOTE_ENDPOINT:-}/" \
-    -e "s|\$\$WASTE_SOCKET|${WASTE_SOCKET}|" \
+    -e "s|\$\$WASTE_ENDPOINT|${WASTE_ENDPOINT}|" \
     -e "s|\$\$PATTERNS_FILE|${PATTERNS_FILE:-/dev/null}|" \
     < tpl_rofi-waste-request > ./output/rofi-waste-request
 

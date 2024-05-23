@@ -1,9 +1,0 @@
-[Unit]
-Description=Waste Socket
-PartOf=waste.service
-
-[Socket]
-ListenStream=${WASTE_SOCKET}
-
-[Install]
-WantedBy=sockets.target

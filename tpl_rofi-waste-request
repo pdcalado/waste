@@ -8,42 +8,36 @@ rofi_error() {
     rofi -theme-str '* { background: var(red); }' -dmenu -p "$1"
 }
 
-# shellcheck disable=SC2157
-IS_REMOTE=$([[ -n "$$PROXY_REMOTE_ENDPOINT" ]] && echo true || echo false)
-
-SOCKET=$$WASTE_SOCKET
-
-# Check if service is running (local or remote setup)
+# Check if service is running
 service_is_running() {
-    # If not remote, use systemd
-    if [ "$IS_REMOTE" = "false" ]; then
-        systemctl --user is-active waste.service && return 0 || return 1
-    fi
-
-    # else, curl health endpoint
+    # curl health endpoint
     curl --silent --fail --show-error \
-        "http://$$PROXY_REMOTE_ENDPOINT/" && return 0 || return 1
+        "http://$$WASTE_ENDPOINT/openapi.json" && return 0 || return 1
 }
 
-# Request transcription (local or remote setup)
+# Request transcription
 service_request() {
-    # If not remote, use socket endpoint
-    if [ "$IS_REMOTE" = "false" ]; then
-        curl --silent --fail --show-error \
-            --unix-socket "$SOCKET" \
-            -X POST -G http://localhost/transcribe \
-            --url-query "language=$1" \
-            --url-query "input=$2"
-        return 0
-    fi
-
-    # else, use remote endpoint
     curl --silent --fail --show-error \
-        "http://$$PROXY_REMOTE_ENDPOINT/transcribe" \
-        -X POST \
-        --url-query "language=$1" \
-        --data-binary @"$2"
-    return 0
+        "http://$$WASTE_ENDPOINT/asr?encode=true&task=transcribe&language=$1&word_timestamps=false&output=json" \
+        -H 'Content-Type: multipart/form-data' \
+        -H 'accept: application/json' \
+        -F "Content-Disposition=form-data" \
+        -F "audio_file=@$2" \
+        -F "Content-Type=audio/wav"
+}
+
+# retry 3 times before giving up
+try_service_request() {
+    for i in {1..3}; do
+        result=$(service_request "$1" "$2" || echo "error")
+        if [ "$result" != "error" ]; then
+            echo "$result"
+            return 0
+        fi
+        logger -s "Failed to get response, retrying ($i)"
+        sleep 1
+    done
+    return 1
 }
 
 logger -s "Invoking whisper"
@@ -116,7 +110,7 @@ fi
 # untrap after killing the recording process
 trap - SIGINT SIGTERM EXIT
 
-output=$(service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")
+output=$(try_service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")
 
 logger -s "$output"
 

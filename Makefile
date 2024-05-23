@@ -7,7 +7,6 @@ prepare:
 install-server: prepare
 	@echo "Installing server..."
 	./generate_unit_files.sh
-	systemctl --user enable output/waste.socket
 	systemctl --user enable output/waste.service
 
 install-proxy: prepare

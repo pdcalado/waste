@@ -1,12 +1,17 @@
 [Unit]
 Description=WASTE Service
-After=waste.socket
-Requires=waste.socket
+After=docker.service
 
 [Service]
-Type=simple
-ExecStart=${BIN_PYTHON} ${WASTE_SERVE_PY} -m ${WHISPER_MODEL} ${WASTE_SOCKET}
-TimeoutStopSec=5
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker stop waste
+ExecStartPre=-/usr/bin/docker rm waste
+ExecStart=/usr/bin/docker run --name waste --gpus all -p 29999:9000 -v %h/.cache/whisper:/root/.cache/whisper -e ASR_MODEL=${WHISPER_MODEL} -e ASR_ENGINE=faster_whisper onerahmet/openai-whisper-asr-webservice:latest-gpu
+ExecStop=/usr/bin/docker stop waste
+ExecStopPost=/usr/bin/docker rm waste
+TimeoutStopSec=7
+Restart=always
+RestartSec=10s
 
 [Install]
 WantedBy=default.target
