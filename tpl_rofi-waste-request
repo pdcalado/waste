@@ -57,12 +57,6 @@ fi
 # Check if audio source is busy
 is_busy=$(pacmd list-sources | grep -A 6 "$audio_source" | awk '/state/ {print $2; exit}')
 
-# If running or idle, print error and exit
-if [ "$is_busy" = "RUNNING" ] || [ "$is_busy" = "IDLE" ]; then
-    rofi_error "Audio source is busy ($is_busy), free it and try again"
-    exit 1
-fi
-
 # Print error and exit if not active
 if ! service_is_running; then
 
@@ -85,13 +79,23 @@ device_string=$(pacmd list-sources | grep -A60 "$audio_source" | grep "device.st
 # Find the number of channels
 device_channels=$(pacmd list-sources | grep -A20 "$audio_source" | grep "channel map:" | cut -d':' -f2- | tr ',' '\n' | wc -l)
 
+device_index=$(pacmd list-sources | grep -B5 "$audio_source" | grep "index:" | cut -d':' -f2 | tr -d ' ')
+
 PID_FILE="/tmp/rofi-waste-request.pid"
 
 # Record audio from the microphone and save it to the temporary file
-arecord --device="$device_string" -f S16_LE -c "$device_channels" -r 16000 --process-id-file "$PID_FILE" "$temp_file16khz" &
+# If running or idle, print error and exit
+if [ "$is_busy" = "RUNNING" ] || [ "$is_busy" = "IDLE" ]; then
+    parec -d "$device_index" --rate 16000 --channels="$device_channels" --format=s16le --file-format=wav > "$temp_file16khz" &
+    echo "$!" > $PID_FILE
+else
+    arecord --device="$device_string" -f S16_LE -c "$device_channels" -r 16000 --process-id-file "$PID_FILE" "$temp_file16khz" &
+fi
 
 # Set language options
 language_options=$(echo "$$LANGS" | tr ',' '\n')
+repeat_options=$(echo "$$LANGS" | tr ',' '\n' | sed 's/^/repeat\ last\ in\ /')
+language_options=$(echo -e "$language_options\n$repeat_options")
 
 # Select language using rofi
 lang=$( (echo -e "$language_options";)  | rofi -dmenu -p "Speak now" || true)
@@ -110,7 +114,17 @@ fi
 # untrap after killing the recording process
 trap - SIGINT SIGTERM EXIT
 
-output=$(try_service_request "$lang" "$temp_file16khz" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")
+target_file=$temp_file16khz
+
+# check if $lang contains "repeat" as the first word
+if [[ "$lang" == "repeat "* ]]; then
+    lang=$(echo "$lang" | rev | cut -d' ' -f1 | rev)
+    rm -f "$temp_file16khz"
+    last_file=$(ls -t /tmp | grep "stt-" | grep ".wav" | head -n1)
+    target_file="/tmp/$last_file"
+fi
+
+output=$(try_service_request "$lang" "$target_file" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")
 
 logger -s "$output"
 
