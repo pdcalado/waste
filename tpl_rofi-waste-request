@@ -120,7 +120,8 @@ target_file=$temp_file16khz
 if [[ "$lang" == "repeat "* ]]; then
     lang=$(echo "$lang" | rev | cut -d' ' -f1 | rev)
     rm -f "$temp_file16khz"
-    last_file=$(ls -t /tmp | grep "stt-" | grep ".wav" | head -n1)
+    last_file=$(ls -t /tmp | grep "stt-" | grep ".wav" | head -n1 || true)
+    echo "last is $?"
     target_file="/tmp/$last_file"
 fi
 
