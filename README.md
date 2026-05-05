@@ -117,6 +117,36 @@ Now you can bind the client script to a key in your window manager, for example 
 bindsym $mod+n exec $HOME/.local/bin/rofi-whisper-request
 ```
 
+## Troubleshooting
+
+### Transcriptions suddenly slow (GPU dropped, CPU fallback)
+
+After a system update — kernel, NVIDIA driver, or `nvidia-container-toolkit` — the container may silently fall back to CPU. Symptom: `nvidia-smi` on the host works fine, the container is up, but requests take much longer than usual.
+
+**Diagnose:**
+
+```sh
+docker logs waste 2>&1 | grep -i cuda
+# If you see: "CUDA initialization: CUDA unknown error ... Setting the available devices to be zero."
+# then PyTorch can't talk to the GPU even though the container was started with --gpus all.
+
+docker exec waste ls -l /dev/nvidia-uvm /dev/nvidia-uvm-tools
+ls -l /dev/nvidia-uvm /dev/nvidia-uvm-tools
+# Compare major numbers. If they differ, the CDI spec is stale.
+
+nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv
+# When healthy, the container's python process should appear here using several GiB of VRAM.
+```
+
+**Fix:** regenerate the CDI spec, then restart the container.
+
+```sh
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+systemctl --user restart waste.service
+```
+
+The `nvidia` Docker runtime on this setup uses CDI mode (`/etc/nvidia-container-runtime/config.toml` → `mode = "cdi"`), which reads `/etc/cdi/nvidia.yaml` on every container start. If that file was generated before the kernel's `nvidia-uvm` major number settled, the device nodes injected into the container point at the wrong driver and CUDA init fails. Regenerating writes the current host majors and the next start works.
+
 ## Uninstall
 
 Run `make uninstall`.
