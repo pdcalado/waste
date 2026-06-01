@@ -35,7 +35,8 @@ This host uses NVIDIA + Docker via CDI:
 - `/etc/nvidia-container-runtime/config.toml` has `mode = "cdi"`
 - `--gpus all` therefore consults `/etc/cdi/nvidia.yaml`, not the legacy `nvidia-container-cli` mknod path
 - If the CDI spec is stale (generated before kernel module majors settled), device nodes injected into the container point at the wrong driver and CUDA fails silently — PyTorch falls back to CPU, requests get ~10x slower
-- Recovery: `sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml` then restart the unit. See README "Troubleshooting" for the diagnostic flow
+- The `nvidia-uvm` major is allocated dynamically and can change on every reboot, so a static `/etc/cdi/nvidia.yaml` goes stale. `nvidia-cdi-refresh.service` (in this repo, installed to `/etc/systemd/system/`) regenerates the spec before `docker.service` each boot to prevent this. If a user reports it broke "after a reboot", check that this unit is enabled and active (`systemctl is-active nvidia-cdi-refresh.service`)
+- Recovery for one boot: `sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml` then restart the unit. See README "Troubleshooting" for the diagnostic flow
 
 When investigating slowness, always check `nvidia-smi --query-compute-apps=...` — the container's python should be listed with multi-GiB VRAM. If it isn't, the container is on CPU regardless of what `--gpus all` and `docker inspect` claim.
 

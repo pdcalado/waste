@@ -147,6 +147,18 @@ systemctl --user restart waste.service
 
 The `nvidia` Docker runtime on this setup uses CDI mode (`/etc/nvidia-container-runtime/config.toml` → `mode = "cdi"`), which reads `/etc/cdi/nvidia.yaml` on every container start. If that file was generated before the kernel's `nvidia-uvm` major number settled, the device nodes injected into the container point at the wrong driver and CUDA init fails. Regenerating writes the current host majors and the next start works.
 
+**Why it recurs across reboots:** the `nvidia-uvm` major number is allocated dynamically and can change on every boot, while `/etc/cdi/nvidia.yaml` is static — so a spec generated on one boot goes stale on the next.
+
+**Permanent fix (installed):** `nvidia-cdi-refresh.service` (in this repo) is a root systemd oneshot that regenerates the CDI spec before `docker.service` on every boot. Install once:
+
+```sh
+sudo cp nvidia-cdi-refresh.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now nvidia-cdi-refresh.service
+```
+
+With it enabled you should never need the manual regenerate above again.
+
 ## Uninstall
 
 Run `make uninstall`.

@@ -1,0 +1,18 @@
+[Unit]
+Description=Regenerate NVIDIA CDI spec at boot (nvidia-uvm major is allocated dynamically and the static /etc/cdi/nvidia.yaml goes stale across reboots)
+# CDI spec is read by the nvidia runtime when a container starts, so this just
+# needs to land before any GPU container. waste.service is After=docker.service,
+# so ordering before docker is sufficient.
+Before=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Force the nvidia device nodes (and thus module load) so nvidia-ctk reads the
+# real majors for this boot. -c 0 = card 0, -u = create the UVM nodes.
+ExecStartPre=/usr/bin/nvidia-modprobe -c 0 -u
+ExecStart=/usr/bin/nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+
+[Install]
+WantedBy=multi-user.target
