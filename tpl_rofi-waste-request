@@ -46,7 +46,10 @@ logger -s "Invoking whisper"
 audio_source=$$AUDIO_DEVICE
 
 # Check if audio source is muted
-is_muted=$(pacmd list-sources | grep -A 11 "$audio_source" | awk '/muted/ {print $2; exit}')
+# Anchor on the "name: <...>" line: a bare device-name match also hits
+# device.master_device of any virtual-source module remapping this mic, which
+# pulls in the *next* source's properties and corrupts the values below.
+is_muted=$(pacmd list-sources | grep -A 11 "name: <$audio_source>" | awk '/muted/ {print $2; exit}')
 
 # If muted print error and exit
 if [ "$is_muted" = "yes" ]; then
@@ -55,7 +58,7 @@ if [ "$is_muted" = "yes" ]; then
 fi
 
 # Check if audio source is busy
-is_busy=$(pacmd list-sources | grep -A 6 "$audio_source" | awk '/state/ {print $2; exit}')
+is_busy=$(pacmd list-sources | grep -A 6 "name: <$audio_source>" | awk '/state/ {print $2; exit}')
 
 # Print error and exit if not active
 if ! service_is_running; then
@@ -74,12 +77,13 @@ fi
 temp_file16khz=$(mktemp -t "stt-XXXXXXXXXX.wav")
 
 # Find the right microphone
-device_string=$(pacmd list-sources | grep -A60 "$audio_source" | grep "device.string = \"" | head -n1 | cut -d'"' -f2)
+device_string=$(pacmd list-sources | grep -A60 "name: <$audio_source>" | grep "device.string = \"" | head -n1 | cut -d'"' -f2)
 
-# Find the number of channels
-device_channels=$(pacmd list-sources | grep -A20 "$audio_source" | grep "channel map:" | cut -d':' -f2- | tr ',' '\n' | wc -l)
+# Find the number of channels; read it from "sample spec: s16le 1ch 44100Hz"
+# rather than counting "channel map:" entries, which is ambiguous across blocks
+device_channels=$(pacmd list-sources | grep -A20 "name: <$audio_source>" | grep "sample spec:" | head -n1 | grep -oE '[0-9]+ch' | tr -d 'ch')
 
-device_index=$(pacmd list-sources | grep -B5 "$audio_source" | grep "index:" | cut -d':' -f2 | tr -d ' ')
+device_index=$(pacmd list-sources | grep -B5 "name: <$audio_source>" | grep "index:" | head -n1 | cut -d':' -f2- | tr -d ' *')
 
 PID_FILE="/tmp/rofi-waste-request.pid"
 
