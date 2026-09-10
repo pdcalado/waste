@@ -44,4 +44,3 @@ When investigating slowness, always check `nvidia-smi --query-compute-apps=...` 
 
 - `output/` files diverge from `tpl_*` after envsubst — by design (env interpolation)
 - `ExecStartPre=-/usr/bin/docker stop waste` and `... rm waste` exiting non-zero on first start — the leading `-` makes failure non-fatal; expected when no prior container exists
-- The repo contains stray binaries at the top level (`goparec`, `foobar.wav`, etc.) — leftover artifacts, not part of the install flow
