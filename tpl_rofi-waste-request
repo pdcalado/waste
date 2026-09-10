@@ -16,9 +16,18 @@ service_is_running() {
 }
 
 # Request transcription
+#
+# An empty language means auto-detect. The parameter is optional on /asr and
+# whisper works the language out from the audio, so it is left off the query
+# entirely rather than sent empty.
 service_request() {
+    language_query=""
+    if [ -n "$1" ]; then
+        language_query="&language=$1"
+    fi
+
     curl --silent --fail --show-error \
-        "http://$$WASTE_ENDPOINT/asr?encode=true&task=transcribe&language=$1&word_timestamps=false&output=json" \
+        "http://$$WASTE_ENDPOINT/asr?encode=true&task=transcribe${language_query}&word_timestamps=false&output=json" \
         -H 'Content-Type: multipart/form-data' \
         -H 'accept: application/json' \
         -F "Content-Disposition=form-data" \
@@ -96,10 +105,11 @@ else
     arecord --device="$device_string" -f S16_LE -c "$device_channels" -r 16000 --process-id-file "$PID_FILE" "$temp_file16khz" &
 fi
 
-# Set language options
-language_options=$(echo "$$LANGS" | tr ',' '\n')
+# Set language options: "auto" is the only choice for a fresh recording, since
+# whisper detects the language itself. The named languages survive only as
+# repeats, to re-run the last recording when that detection got it wrong.
 repeat_options=$(echo "$$LANGS" | tr ',' '\n' | sed 's/^/repeat\ last\ in\ /')
-language_options=$(echo -e "$language_options\n$repeat_options")
+language_options=$(echo -e "auto\n$repeat_options")
 
 # Select language using rofi
 lang=$( (echo -e "$language_options";)  | rofi -dmenu -p "Speak now" || true)
@@ -127,6 +137,11 @@ if [[ "$lang" == "repeat "* ]]; then
     last_file=$(ls -t /tmp | grep "stt-" | grep ".wav" | head -n1 || true)
     echo "last is $?"
     target_file="/tmp/$last_file"
+fi
+
+# "auto" is the absence of a choice: blank it so the request omits the language
+if [ "$lang" = "auto" ]; then
+    lang=""
 fi
 
 output=$(try_service_request "$lang" "$target_file" | jq '.text' -r | sed "s/^\ //" | sed -E -f "$$PATTERNS_FILE")

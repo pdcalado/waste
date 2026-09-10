@@ -5,8 +5,8 @@ This repo shares my (opinionated) setup in Linux to reduce keyboard use by makin
 The main goal is to get speech to text anywhere:
 
 * press a key
-* rofi pops up with language selection (recording starts immediately)
-* press enter to choose language **and** stop recording
+* rofi pops up with `auto` first, then one `repeat last in <lang>` entry per language (recording starts immediately)
+* press enter to accept `auto` — letting whisper detect the language — **and** stop recording
 * notification pops when transcription is ready
 * whisper's output text becomes available in the clipboard
 
@@ -53,7 +53,7 @@ Copy the file `.example-single-host-env` to `.env` and edit it to your needs:
 
 ```sh
 AUDIO_DEVICE=alsa_input.pci-0000_03_00.6.analog-stereo # find your mic with 'pacmd list-sources`
-LANGS="en,es" # comma separated list of languages to transcribe
+LANGS="en,es" # comma separated list of languages offered as `repeat last in <lang>` retries; fresh recordings always use `auto`
 BIN_PATH="/home/user/.local/bin" # path where the client script will be installed
 PATTERNS_FILE="/home/user/.waste-patterns.sed" # path to sed patterns file
 WHISPER_MODEL=medium # whisper model to use
@@ -103,7 +103,7 @@ Copy the file `.example-client-env` to `.env` and edit it to your needs:
 
 ```sh
 AUDIO_DEVICE=alsa_input.pci-0000_03_00.6.analog-stereo # find your mic with 'pacmd list-sources`
-LANGS="en,es" # comma separated list of languages to transcribe
+LANGS="en,es" # comma separated list of languages offered as `repeat last in <lang>` retries; fresh recordings always use `auto`
 BIN_PATH="/home/user/.local/bin" # path where the client script will be installed
 PATTERNS_FILE="/home/user/.waste-patterns.sed" # path to sed patterns file
 WASTE_ENDPOINT="192.168.1.10:29999" # remote host IP and port where server is listening
