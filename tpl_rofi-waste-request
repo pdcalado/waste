@@ -8,11 +8,24 @@ rofi_error() {
     rofi -theme-str '* { background: var(red); }' -dmenu -p "$1"
 }
 
-# Check if service is running
-service_is_running() {
-    # curl health endpoint
-    curl --silent --fail --show-error \
-        "http://$$WASTE_ENDPOINT/openapi.json" && return 0 || return 1
+# Check if service is running: prints up, busy or down
+#
+# Bounded, because a server transcribing something long (a recorded meeting
+# can take minutes) accepts the connection and answers nothing until it is
+# done; an unbounded curl would hang here with nothing on screen. A timeout
+# after connecting means busy; one before connecting (host gone) means down.
+service_status() {
+    rc=0
+    connects=$(curl --silent --fail --output /dev/null --max-time 3 \
+        --write-out '%{num_connects}' \
+        "http://$$WASTE_ENDPOINT/openapi.json") || rc=$?
+    if [ "$rc" = 0 ]; then
+        echo up
+    elif [ "$rc" = 28 ] && [ "$connects" = 1 ]; then
+        echo busy
+    else
+        echo down
+    fi
 }
 
 # Request transcription
@@ -70,9 +83,18 @@ fi
 is_busy=$(pacmd list-sources | grep -A 6 "name: <$audio_source>" | awk '/state/ {print $2; exit}')
 
 # Print error and exit if not active
-if ! service_is_running; then
+status=$(service_status)
 
-    if [ "$IS_REMOTE" = "false" ]; then
+if [ "$status" = "busy" ]; then
+    rofi_error "Whisper is busy with another transcription, try again in a few minutes"
+    exit 1
+fi
+
+if [ "$status" = "down" ]; then
+
+    # unset means single host: under set -u a bare $IS_REMOTE would kill the
+    # script here, silently, on the one path that should say something
+    if [ "${IS_REMOTE:-false}" = "false" ]; then
         rofi_error "Whisper was not running, starting service using systemctl"
         systemctl --user start waste.service
         exit 1
