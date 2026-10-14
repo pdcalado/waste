@@ -21,7 +21,7 @@ There are 3 main components:
 
 The setup relies on:
 
-* [systemd](https://systemd.io) (to run server and proxy as services)
+* [systemd](https://systemd.io) (to run the server as a service)
 * [pacmd](https://linux.die.net/man/1/pacmd) (to list audio sources)
 * [arecord](https://linux.die.net/man/1/arecord) (to record audio)
 * [whisper-asr](https://github.com/ahmetoner/whisper-asr-webservice) (to transcribe audio files)
@@ -91,11 +91,11 @@ flowchart LR
 Copy the file `.example-server-env` to `.env` and edit it to your needs:
 
 ```sh
-WASTE_ENDPOINT=192.168.1.10:29999 # ip and port where server will listen
+WASTE_ENDPOINT=192.168.1.10:29999 # ip and port where server will listen (default 127.0.0.1:29999, this host only)
 WHISPER_MODEL=medium # whisper model to use
 ```
 
-* Run `make install-server` (generates and installs systemd units, including proxy)
+* Run `make install-server` (generates and installs the systemd unit)
 
 **In the local host:**
 

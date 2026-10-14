@@ -6,7 +6,7 @@ After=docker.service
 TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker stop waste
 ExecStartPre=-/usr/bin/docker rm waste
-ExecStart=/usr/bin/docker run --name waste --gpus all -p 29999:9000 -v %h/.cache/whisper:/root/.cache/whisper -e ASR_MODEL=${WHISPER_MODEL} -e ASR_ENGINE=faster_whisper onerahmet/openai-whisper-asr-webservice:latest-gpu
+ExecStart=/usr/bin/docker run --runtime nvidia --gpus all --name waste -p ${WASTE_ENDPOINT}:9000 -v %h/.cache/whisper:/root/.cache/whisper -e ASR_MODEL=${WHISPER_MODEL} -e ASR_ENGINE=faster_whisper onerahmet/openai-whisper-asr-webservice:latest-gpu
 ExecStop=/usr/bin/docker stop waste
 ExecStopPost=/usr/bin/docker rm waste
 TimeoutStopSec=7

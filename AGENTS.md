@@ -4,13 +4,13 @@ Orientation notes for agents working in this repo. Read `README.md` first for th
 
 ## What this is
 
-A personal Linux speech-to-text setup. A whisper-asr Docker container (`onerahmet/openai-whisper-asr-webservice:latest-gpu`) runs as a long-lived service exposing port 29999; a small client script records audio with `arecord`, POSTs `/asr`, and pipes the transcription to the clipboard via `xclip`.
+A personal Linux speech-to-text setup. A whisper-asr Docker container (`onerahmet/openai-whisper-asr-webservice:latest-gpu`) runs as a long-lived service on `WASTE_ENDPOINT` (default `127.0.0.1:29999`, this host only); a small client script records audio with `arecord`, POSTs `/asr`, and pipes the transcription to the clipboard via `xclip`.
 
 ## Build / install pipeline
 
 `make` is the only entry point. Don't edit generated files directly without also editing the template:
 
-- `tpl_waste.service`, `tpl_waste-proxy.service`, `tpl_rofi-waste-request` → envsubst with `.env` vars → `output/*`
+- `tpl_waste.service`, `tpl_rofi-waste-request` → envsubst with `.env` vars → `output/*`
 - `generate_unit_files.sh` does the substitution for the systemd units
 - `generate_client_request.sh` does it for the rofi client script
 - `make install-server` regenerates units and runs `systemctl --user enable output/waste.service`
