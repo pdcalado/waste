@@ -6,7 +6,16 @@ After=docker.service
 TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker stop waste
 ExecStartPre=-/usr/bin/docker rm waste
-ExecStart=/usr/bin/docker run --runtime nvidia --gpus all --name waste -p ${WASTE_ENDPOINT}:9000 -v %h/.cache/whisper:/root/.cache/whisper -e ASR_MODEL=${WHISPER_MODEL} -e ASR_ENGINE=faster_whisper onerahmet/openai-whisper-asr-webservice:latest-gpu
+# eMudhra stopgap (2026-10-26): the image's CAs, certifi's included, still
+# trust the compromised eMudhra chains (AAA Certificate Services, emSign ECC
+# Root CA - G3), so it gets the host's store. The paths are an Arch host's.
+# Drop once a fixed image is 7 days old.
+ExecStart=/usr/bin/docker run --runtime nvidia --gpus all --name waste -p ${WASTE_ENDPOINT}:9000 -v %h/.cache/whisper:/root/.cache/whisper -e ASR_MODEL=${WHISPER_MODEL} -e ASR_ENGINE=faster_whisper \
+  -v /etc/ca-certificates/extracted:/etc/ca-certificates/extracted:ro \
+  -e SSL_CERT_FILE=/etc/ca-certificates/extracted/tls-ca-bundle.pem \
+  -e SSL_CERT_DIR=/etc/ca-certificates/extracted/cadir \
+  -v /etc/ca-certificates/extracted/tls-ca-bundle.pem:/app/.venv/lib/python3.10/site-packages/certifi/cacert.pem:ro \
+  onerahmet/openai-whisper-asr-webservice:latest-gpu
 ExecStop=/usr/bin/docker stop waste
 ExecStopPost=/usr/bin/docker rm waste
 TimeoutStopSec=7
